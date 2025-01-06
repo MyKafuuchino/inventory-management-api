@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 )
@@ -35,5 +36,10 @@ func (r *userRepository) CreateNewUser(body *entity.User) (*entity.User, error) 
 	if err := r.db.Table("users").Create(&body).Error; err != nil {
 		return nil, err
 	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	body.Password = string(hashedPassword)
 	return body, nil
 }

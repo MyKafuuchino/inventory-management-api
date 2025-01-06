@@ -6,10 +6,10 @@ import (
 
 type User struct {
 	Base
-	Username  string    `json:"username"`
-	FullName  string    `json:"full_name"`
-	Password  string    `json:"password"`
-	Role      string    `json:"role"`
+	Username  string    `json:"username" validate:"required,min=3,max=50"`
+	FullName  string    `json:"full_name" validate:"required,max=255"`
+	Password  string    `json:"password" validate:"required,min=8"`
+	Role      string    `gorm:"default:'customer'" json:"role,omitempty" validate:"omitempty,oneof=admin chaser customer"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time ` json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

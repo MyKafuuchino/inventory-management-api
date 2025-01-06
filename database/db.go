@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"inventory-management/config"
 	"log"
 	"sync"
@@ -25,7 +26,9 @@ func InitDatabase() {
 			dbConfig.DbPort,
 			dbConfig.DbName,
 		)
-		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Info),
+		})
 
 		if err != nil {
 			log.Fatalf("Failed to connect to database : %v", err)

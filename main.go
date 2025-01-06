@@ -4,8 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"inventory-management/config"
 	"inventory-management/database"
+	"inventory-management/entity"
 	"inventory-management/middleware"
 	"inventory-management/route"
+	"net/http"
 )
 
 func main() {
@@ -17,6 +19,10 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.ErrorHandler())
+
+	r.NoRoute(func(ctx *gin.Context) {
+		ctx.JSON(http.StatusNotFound, entity.NewResponseError("Not Found"))
+	})
 
 	route.InitRoute(r)
 
