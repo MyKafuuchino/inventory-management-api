@@ -16,5 +16,6 @@ func UserRoute(ctx *gin.RouterGroup) {
 	{
 		user.GET("/", userController.GetAllUsers)
 		user.GET("/:id", userController.GetUserById)
+		user.POST("/", userController.CreateNewUser)
 	}
 }

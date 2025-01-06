@@ -21,7 +21,11 @@ func (c *UserController) GetAllUsers(ctx *gin.Context) {
 		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"users": users})
+	if len(users) == 0 {
+		err = ctx.Error(entity.NewCustomError(http.StatusNotFound, "No users found create new user"))
+		return
+	}
+	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[[]entity.User]("Success get user", users))
 }
 
 func (c *UserController) GetUserById(ctx *gin.Context) {
@@ -32,4 +36,18 @@ func (c *UserController) GetUserById(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[entity.User]("Success get user", user))
+}
+
+func (c *UserController) CreateNewUser(ctx *gin.Context) {
+	var user entity.User
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, err.Error()))
+		return
+	}
+	createdUser, err := c.userService.CreateNewUser(&user)
+	if err != nil {
+		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[*entity.User]("Success create user", createdUser))
 }
