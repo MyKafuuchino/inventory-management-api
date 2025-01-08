@@ -1,6 +1,6 @@
 MIGRATE=migrate
 MIGRATION_PATH=./database/migration
-DB_URL=mysql://ilham:Muhammad123.@tcp(localhost:3306)/inventory_management
+DB_URL=mysql://root@tcp(localhost:3306)/inventory_management
 
 build:
 	@mkdir -p dist

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"inventory-management/config"
 	"inventory-management/database"
+	"inventory-management/database/seeder"
 	"inventory-management/entity"
 	"inventory-management/middleware"
 	"inventory-management/route"
@@ -14,6 +15,7 @@ func main() {
 	config.InitEnvConfig()
 
 	database.InitDatabase()
+	seeder.SeedUser()
 
 	appConfig := config.GlobalAppConfig
 
