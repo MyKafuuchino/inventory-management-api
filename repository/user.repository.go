@@ -33,13 +33,13 @@ func (r *userRepository) GetUserById(id string) (entity.User, error) {
 }
 
 func (r *userRepository) CreateNewUser(body *entity.User) (*entity.User, error) {
-	if err := r.db.Table("users").Create(&body).Error; err != nil {
-		return nil, err
-	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	body.Password = string(hashedPassword)
+	if err := r.db.Table("users").Create(&body).Error; err != nil {
+		return nil, err
+	}
 	return body, nil
 }

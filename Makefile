@@ -3,7 +3,7 @@ MIGRATION_PATH=./database/migration
 DB_URL=mysql://ilham:Muhammad123.@tcp(localhost:3306)/inventory_management
 
 build:
-	@mkdir dist
+	@mkdir -p dist
 	go build -o dist/myapp main.go
 
 run:
