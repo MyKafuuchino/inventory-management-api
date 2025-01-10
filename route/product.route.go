@@ -15,5 +15,8 @@ func ProductRoute(ctx *gin.RouterGroup) {
 	product := ctx.Group("/products")
 	{
 		product.GET("/", productController.GetAllProducts)
+		product.GET("/:id", productController.GetProductById)
+		product.POST("/", productController.CreateNewProduct)
+		product.PUT("/:id", productController.UpdateProduct)
 	}
 }
