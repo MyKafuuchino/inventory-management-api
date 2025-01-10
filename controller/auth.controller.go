@@ -28,6 +28,11 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
+	if err := Validate.Struct(user); err != nil {
+		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, "Validation error", utils.GetErrorValidationMessages(err)...))
+		return
+	}
+
 	loggedUser, err := c.authService.Login(&user)
 
 	if err != nil {

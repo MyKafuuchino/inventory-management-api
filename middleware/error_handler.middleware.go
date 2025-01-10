@@ -15,7 +15,7 @@ func ErrorHandler() gin.HandlerFunc {
 			var e *entity.CustomError
 			switch {
 			case errors.As(err.Err, &e):
-				ctx.JSON(e.StatusCode, entity.NewResponseError(e.Message))
+				ctx.JSON(e.StatusCode, entity.NewResponseError(e.Message, e.Errors...))
 			default:
 				ctx.JSON(http.StatusInternalServerError, entity.NewResponseError(http.StatusText(http.StatusInternalServerError)))
 			}

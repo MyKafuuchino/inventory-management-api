@@ -7,9 +7,9 @@ type ResponseSuccess[T interface{}] struct {
 }
 
 type ResponseError struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Error   string `json:"error,omitempty"`
+	Success bool     `json:"success"`
+	Message string   `json:"message"`
+	Errors  []string `json:"error,omitempty"`
 }
 
 func NewResponseSuccess[T interface{}](message string, data T) *ResponseSuccess[T] {
@@ -20,10 +20,14 @@ func NewResponseSuccess[T interface{}](message string, data T) *ResponseSuccess[
 	}
 }
 
-func NewResponseError(message string) *ResponseError {
+func NewResponseError(message string, errors ...string) *ResponseError {
+	var errorList []string
+	if len(errors) > 0 {
+		errorList = errors
+	}
 	return &ResponseError{
 		Success: false,
 		Message: message,
-		Error:   "",
+		Errors:  errorList,
 	}
 }

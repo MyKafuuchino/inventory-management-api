@@ -2,10 +2,14 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"inventory-management/entity"
 	"inventory-management/service"
+	"inventory-management/utils"
 	"net/http"
 )
+
+var Validate = validator.New()
 
 type UserController struct {
 	userService service.UserService
@@ -44,10 +48,14 @@ func (c *UserController) CreateNewUser(ctx *gin.Context) {
 		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, err.Error()))
 		return
 	}
+	if err := Validate.Struct(user); err != nil {
+		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, "Validation errors", utils.GetErrorValidationMessages(err)...))
+		return
+	}
 	createdUser, err := c.userService.CreateNewUser(&user)
 	if err != nil {
 		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
 		return
 	}
-	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[*entity.User]("Success create user", createdUser))
+	ctx.JSON(http.StatusCreated, entity.NewResponseSuccess[*entity.User]("Success create user", createdUser))
 }
