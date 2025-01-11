@@ -6,7 +6,7 @@ import (
 )
 
 type Base struct {
-	ID string `json:"id"`
+	ID string `gorm:"primaryKey;not null" json:"id"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) (err error) {
