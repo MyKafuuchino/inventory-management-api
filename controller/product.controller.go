@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"inventory-management/entity"
@@ -63,24 +62,34 @@ func (c *ProductController) CreateNewProduct(ctx *gin.Context) {
 }
 
 func (c *ProductController) UpdateProduct(ctx *gin.Context) {
-	userId := ctx.Param("id")
+	productId := ctx.Param("id")
 	product := &entity.Product{}
+
 	if err := ctx.ShouldBindJSON(product); err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, err.Error()))
+		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, "Invalid input "+err.Error()))
 		return
 	}
 
-	fmt.Printf("Request ID: %s, Product: %+v\n", userId, product)
+	if err := validate.Struct(product); err != nil {
+		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, "Validation Failed", utils.GetErrorValidationMessages(err)...))
+		return
+	}
 
-	//if err := validate.Struct(&product); err != nil {
-	//	err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, err.Error()))
-	//	return
-	//}
-	updatedProduct, err := c.productService.UpdateProduct(userId, product)
+	updatedProduct, err := c.productService.UpdateProduct(productId, product)
 	if err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, "Failed to update product "+err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[*entity.Product]("Success update user", updatedProduct))
+	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[*entity.Product]("Success update product", updatedProduct))
+}
+
+func (c ProductController) DeleteProductById(ctx *gin.Context) {
+	productId := ctx.Param("id")
+	product, err := c.productService.DeleteProduct(productId)
+	if err != nil {
+		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, "Failed to delete product "+err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[*entity.Product]("Success delete user", product))
 }

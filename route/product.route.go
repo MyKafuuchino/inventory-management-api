@@ -18,5 +18,6 @@ func ProductRoute(ctx *gin.RouterGroup) {
 		product.GET("/:id", productController.GetProductById)
 		product.POST("/", productController.CreateNewProduct)
 		product.PUT("/:id", productController.UpdateProduct)
+		product.DELETE("/:id", productController.DeleteProductById)
 	}
 }
