@@ -7,6 +7,7 @@ import (
 	"inventory-management/config"
 	"inventory-management/database"
 	"inventory-management/entity"
+	"inventory-management/utils"
 	"net/http"
 	"strings"
 )
@@ -16,14 +17,14 @@ func ProtectRoute(roles ...string) gin.HandlerFunc {
 		secretKey := config.GlobalAppConfig.SecretKey
 		token := ctx.GetHeader("Authorization")
 		if token == "" {
-			_ = ctx.Error(entity.NewCustomError(http.StatusUnauthorized, "Authorization header is empty"))
+			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Authorization header is empty"))
 			ctx.Abort()
 			return
 		}
 
 		tokenPart := strings.Split(token, " ")
 		if len(tokenPart) != 2 || tokenPart[0] != "Bearer" {
-			_ = ctx.Error(entity.NewCustomError(http.StatusUnauthorized, "Invalid token format"))
+			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid token format"))
 			ctx.Abort()
 			return
 		}
@@ -35,24 +36,22 @@ func ProtectRoute(roles ...string) gin.HandlerFunc {
 			return []byte(secretKey), nil
 		})
 
-		fmt.Println(parsedToken, err)
-
 		if err != nil || !parsedToken.Valid {
-			_ = ctx.Error(entity.NewCustomError(http.StatusUnauthorized, "Invalid token"))
+			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid token"))
 			ctx.Abort()
 			return
 		}
 
 		claims, ok := parsedToken.Claims.(jwt.MapClaims)
 		if !ok || !parsedToken.Valid {
-			_ = ctx.Error(entity.NewCustomError(http.StatusUnauthorized, "Invalid token claims"))
+			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid token claims"))
 			ctx.Abort()
 			return
 		}
 
 		userID, ok := claims["userId"].(string)
 		if !ok {
-			_ = ctx.Error(entity.NewCustomError(http.StatusUnauthorized, "UserId not found in token"))
+			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "UserId not found in token"))
 			ctx.Abort()
 			return
 		}
@@ -61,7 +60,7 @@ func ProtectRoute(roles ...string) gin.HandlerFunc {
 		result := database.DB.Table("users").Select("id", "username", "role").Where("id = ?", userID).First(user)
 
 		if result.Error != nil {
-			_ = ctx.Error(entity.NewCustomError(http.StatusUnauthorized, "User not found"))
+			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "User not found"))
 			ctx.Abort()
 			return
 		}
@@ -71,7 +70,7 @@ func ProtectRoute(roles ...string) gin.HandlerFunc {
 				ctx.Set("user", user)
 				ctx.Next()
 			} else {
-				_ = ctx.Error(entity.NewCustomError(http.StatusUnauthorized, "Invalid role"))
+				_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid role"))
 				ctx.Abort()
 				return
 			}

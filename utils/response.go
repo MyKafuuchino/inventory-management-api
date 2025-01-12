@@ -1,4 +1,4 @@
-package entity
+package utils
 
 type ResponseSuccess[T interface{}] struct {
 	Success bool   `json:"success"`

@@ -5,9 +5,9 @@ import (
 	"inventory-management/config"
 	"inventory-management/database"
 	"inventory-management/database/seeder"
-	"inventory-management/entity"
 	"inventory-management/middleware"
 	"inventory-management/route"
+	"inventory-management/utils"
 	"net/http"
 )
 
@@ -23,7 +23,7 @@ func main() {
 	r.Use(middleware.ErrorHandler())
 
 	r.NoRoute(func(ctx *gin.Context) {
-		ctx.JSON(http.StatusNotFound, entity.NewResponseError("Not Found"))
+		ctx.JSON(http.StatusNotFound, utils.NewResponseError("Not Found"))
 	})
 
 	route.InitRoute(r)

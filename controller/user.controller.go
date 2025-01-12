@@ -22,40 +22,40 @@ func NewUserController(userService service.UserService) *UserController {
 func (c *UserController) GetAllUsers(ctx *gin.Context) {
 	users, err := c.userService.GetAllUsers()
 	if err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
 		return
 	}
 	if len(users) == 0 {
-		err = ctx.Error(entity.NewCustomError(http.StatusNotFound, "No users found create new user"))
+		err = ctx.Error(utils.NewCustomError(http.StatusNotFound, "No users found create new user"))
 		return
 	}
-	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[[]entity.User]("Success get user", users))
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[[]entity.User]("Success get user", users))
 }
 
 func (c *UserController) GetUserById(ctx *gin.Context) {
 	userId := ctx.Param("id")
 	user, err := c.userService.GetUserById(userId)
 	if err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusNotFound, err.Error()))
+		err = ctx.Error(utils.NewCustomError(http.StatusNotFound, err.Error()))
 		return
 	}
-	ctx.JSON(http.StatusOK, entity.NewResponseSuccess[entity.User]("Success get user", user))
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[entity.User]("Success get user", user))
 }
 
 func (c *UserController) CreateNewUser(ctx *gin.Context) {
 	var user entity.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, err.Error()))
+		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, err.Error()))
 		return
 	}
 	if err := Validate.Struct(user); err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, "Validation errors", utils.GetErrorValidationMessages(err)...))
+		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, "Validation errors", utils.GetErrorValidationMessages(err)...))
 		return
 	}
 	createdUser, err := c.userService.CreateNewUser(&user)
 	if err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
 		return
 	}
-	ctx.JSON(http.StatusCreated, entity.NewResponseSuccess[*entity.User]("Success create user", createdUser))
+	ctx.JSON(http.StatusCreated, utils.NewResponseSuccess[*entity.User]("Success create user", createdUser))
 }

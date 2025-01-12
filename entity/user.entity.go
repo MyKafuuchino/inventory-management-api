@@ -11,5 +11,7 @@ type User struct {
 	Password  string    `gorm:"size:255;not null" json:"password" validate:"required,min=3,max=255"`
 	Role      string    `gorm:"default:'customer'" json:"role,omitempty" validate:"omitempty,oneof=admin chaser customer"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+
+	Orders []Order `gorm:"foreignKey:UserID" json:"orders,omitempty"`
 }

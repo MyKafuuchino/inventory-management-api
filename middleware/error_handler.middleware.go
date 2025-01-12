@@ -3,7 +3,7 @@ package middleware
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"inventory-management/entity"
+	"inventory-management/utils"
 	"net/http"
 )
 
@@ -12,12 +12,12 @@ func ErrorHandler() gin.HandlerFunc {
 		ctx.Next()
 		err := ctx.Errors.Last()
 		if err != nil {
-			var e *entity.CustomError
+			var e *utils.CustomError
 			switch {
 			case errors.As(err.Err, &e):
-				ctx.JSON(e.StatusCode, entity.NewResponseError(e.Message, e.Errors...))
+				ctx.JSON(e.StatusCode, utils.NewResponseError(e.Message, e.Errors...))
 			default:
-				ctx.JSON(http.StatusInternalServerError, entity.NewResponseError(http.StatusText(http.StatusInternalServerError)))
+				ctx.JSON(http.StatusInternalServerError, utils.NewResponseError(http.StatusText(http.StatusInternalServerError)))
 			}
 		}
 	}

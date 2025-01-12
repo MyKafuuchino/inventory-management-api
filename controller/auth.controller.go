@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"inventory-management/config"
-	"inventory-management/entity"
 	"inventory-management/service"
 	"inventory-management/utils"
 	"net/http"
@@ -24,29 +23,29 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	jwtService := utils.NewJwtService([]byte(appConfig.SecretKey))
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, err.Error()))
+		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, err.Error()))
 		return
 	}
 
 	if err := Validate.Struct(user); err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusBadRequest, "Validation error", utils.GetErrorValidationMessages(err)...))
+		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, "Validation error", utils.GetErrorValidationMessages(err)...))
 		return
 	}
 
 	loggedUser, err := c.authService.Login(&user)
 
 	if err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
 	token, err := jwtService.GenJwtToken(loggedUser.ID)
 	if err != nil {
-		err = ctx.Error(entity.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, entity.NewResponseSuccess("Success login", gin.H{
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess("Success login", gin.H{
 		"username":  loggedUser.Username,
 		"full_name": loggedUser.FullName,
 		"token":     token,
