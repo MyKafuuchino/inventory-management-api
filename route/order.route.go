@@ -15,6 +15,6 @@ func OrderRoute(ctx *gin.RouterGroup) {
 
 	order := ctx.Group("/orders")
 	{
-		order.GET("/", orderController.GetAllProducts)
+		order.GET("", orderController.GetAllProducts)
 	}
 }

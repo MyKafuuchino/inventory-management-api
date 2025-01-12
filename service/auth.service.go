@@ -1,27 +1,53 @@
 package service
 
 import (
+	"errors"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"inventory-management/entity"
+	"inventory-management/model"
 	"inventory-management/repository"
+	"inventory-management/utils"
+	"net/http"
 )
 
-type Login struct {
-	Username string `validate:"required,gte=1,lte=255"`
-	Password string `validate:"required,gte=1,lte=255"`
-}
-
 type AuthService interface {
-	Login(body *Login) (*entity.User, error)
+	Login(body *model.Login) (*entity.User, string, error)
 }
 
 type authService struct {
 	authRepository repository.AuthRepository
+	jwtSecret      []byte
 }
 
-func NewAuthService(authRepository repository.AuthRepository) AuthService {
-	return &authService{authRepository: authRepository}
+func NewAuthService(authRepository repository.AuthRepository, jwtSecret []byte) AuthService {
+	return &authService{authRepository: authRepository, jwtSecret: jwtSecret}
 }
 
-func (s *authService) Login(body *Login) (*entity.User, error) {
-	return s.authRepository.Login(body.Username, body.Password)
+func (s *authService) Login(body *model.Login) (*entity.User, string, error) {
+
+	user, err := s.authRepository.Login(body.Username)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, "", utils.NewCustomError(http.StatusUnauthorized, "invalid username or password")
+		}
+		return nil, "", err
+	}
+
+	jwtService := utils.NewJwtService(s.jwtSecret)
+
+	token, err := jwtService.GenJwtToken(user.ID)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password)); err != nil {
+		return nil, "", utils.NewCustomError(http.StatusUnauthorized, "invalid username or password")
+	}
+
+	return user, token, nil
 }

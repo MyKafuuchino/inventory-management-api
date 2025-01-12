@@ -6,6 +6,7 @@ import (
 	"inventory-management/entity"
 	"inventory-management/service"
 	"inventory-management/utils"
+	"inventory-management/validation"
 	"net/http"
 )
 
@@ -22,11 +23,7 @@ func NewProductController(productService service.ProductService) *ProductControl
 func (c *ProductController) GetAllProducts(ctx *gin.Context) {
 	products, err := c.productService.GetAllProducts()
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
-		return
-	}
-	if len(products) == 0 {
-		err = ctx.Error(utils.NewCustomError(http.StatusNotFound, "No product found, please create new product"))
+		err = ctx.Error(err)
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[[]entity.Product]("Success get user", products))
@@ -36,25 +33,27 @@ func (c *ProductController) GetProductById(ctx *gin.Context) {
 	userId := ctx.Param("id")
 	product, err := c.productService.GetProductById(userId)
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusNotFound, err.Error()))
+		err = ctx.Error(err)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[entity.Product]("Success get user", product))
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[*entity.Product]("Success get user", product))
 }
 
 func (c *ProductController) CreateNewProduct(ctx *gin.Context) {
-	product := entity.Product{}
-	if err := ctx.ShouldBindJSON(&product); err != nil {
+	product := &entity.Product{}
+	if err := ctx.ShouldBindJSON(product); err != nil {
 		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, err.Error()))
 		return
 	}
-	if err := validate.Struct(&product); err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, "Validation Failed", utils.GetErrorValidationMessages(err)...))
+
+	if err := validation.ValidationHandler(product); err != nil {
+		err = ctx.Error(err)
 		return
 	}
-	createdProduct, err := c.productService.CreateNewProduct(&product)
+
+	createdProduct, err := c.productService.CreateNewProduct(product)
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(err)
 		return
 	}
 
@@ -70,14 +69,14 @@ func (c *ProductController) UpdateProduct(ctx *gin.Context) {
 		return
 	}
 
-	if err := validate.Struct(product); err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, "Validation Failed", utils.GetErrorValidationMessages(err)...))
+	if err := validation.ValidationHandler(product); err != nil {
+		err = ctx.Error(err)
 		return
 	}
 
 	updatedProduct, err := c.productService.UpdateProduct(productId, product)
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, "Failed to update product "+err.Error()))
+		err = ctx.Error(err)
 		return
 	}
 

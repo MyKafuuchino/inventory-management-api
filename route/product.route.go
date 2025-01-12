@@ -15,9 +15,9 @@ func ProductRoute(ctx *gin.RouterGroup) {
 	productController := controller.NewProductController(productService)
 	product := ctx.Group("/products")
 	{
-		product.GET("/", productController.GetAllProducts)
+		product.GET("", productController.GetAllProducts)
 		product.GET("/:id", productController.GetProductById)
-		product.POST("/", middleware.ProtectRoute("admin"), productController.CreateNewProduct)
+		product.POST("", middleware.ProtectRoute("admin"), productController.CreateNewProduct)
 		product.PUT("/:id", middleware.ProtectRoute("admin"), productController.UpdateProduct)
 		product.DELETE("/:id", middleware.ProtectRoute("admin"), productController.DeleteProductById)
 	}

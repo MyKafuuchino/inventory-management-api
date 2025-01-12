@@ -9,7 +9,7 @@ import (
 
 type ProductRepository interface {
 	GetAllProducts() ([]entity.Product, error)
-	GetProductById(productId string) (entity.Product, error)
+	GetProductById(productId string) (*entity.Product, error)
 	CreateNewProduct(product *entity.Product) (*entity.Product, error)
 	UpdateProduct(productId string, product *entity.Product) (*entity.Product, error)
 	DeleteProductById(productId string) (*entity.Product, error)
@@ -25,22 +25,25 @@ func NewProductRepository(db *gorm.DB) ProductRepository {
 
 func (r *productRepository) GetAllProducts() ([]entity.Product, error) {
 	var products []entity.Product
-	err := r.db.Table("products").Find(&products).Error
-	return products, err
+	if err := r.db.Table("products").Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
 }
 
-func (r *productRepository) GetProductById(productId string) (entity.Product, error) {
-	var product entity.Product
-	err := r.db.Table("products").Where("id = ?", productId).First(&product).Error
-	return product, err
+func (r *productRepository) GetProductById(productId string) (*entity.Product, error) {
+	var product *entity.Product
+	if err := r.db.Table("products").Where("id = ?", productId).First(&product).Error; err != nil {
+		return nil, err
+	}
+	return product, nil
 }
 
 func (r *productRepository) CreateNewProduct(product *entity.Product) (*entity.Product, error) {
-	var err error
 	if err := r.db.Table("products").Create(&product).Error; err != nil {
 		return nil, err
 	}
-	return product, err
+	return product, nil
 }
 
 func (r *productRepository) UpdateProduct(productId string, product *entity.Product) (*entity.Product, error) {

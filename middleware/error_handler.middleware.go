@@ -12,12 +12,11 @@ func ErrorHandler() gin.HandlerFunc {
 		ctx.Next()
 		err := ctx.Errors.Last()
 		if err != nil {
-			var e *utils.CustomError
-			switch {
-			case errors.As(err.Err, &e):
-				ctx.JSON(e.StatusCode, utils.NewResponseError(e.Message, e.Errors...))
-			default:
-				ctx.JSON(http.StatusInternalServerError, utils.NewResponseError(http.StatusText(http.StatusInternalServerError)))
+			var customError *utils.CustomError
+			if errors.As(err, &customError) {
+				ctx.JSON(customError.StatusCode, utils.NewResponseError(customError.Message, customError.Errors...))
+			} else {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			}
 		}
 	}

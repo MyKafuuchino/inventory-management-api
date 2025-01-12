@@ -2,7 +2,7 @@ package utils
 
 import "github.com/go-playground/validator/v10"
 
-func GetErrorValidationMessages(err error) []string {
+func GetValidationMessages(err error) []string {
 	var errors []string
 	for _, err := range err.(validator.ValidationErrors) {
 		switch err.Tag() {

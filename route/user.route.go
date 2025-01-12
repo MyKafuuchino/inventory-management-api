@@ -15,8 +15,9 @@ func UserRoute(ctx *gin.RouterGroup) {
 	userController := controller.NewUserController(userService)
 	user := ctx.Group("/users", middleware.ProtectRoute("admin"))
 	{
-		user.GET("/", userController.GetAllUsers)
+		user.GET("", userController.GetAllUsers)
 		user.GET("/:id", userController.GetUserById)
-		user.POST("/", userController.CreateNewUser)
+		user.POST("", userController.CreateNewUser)
+		user.DELETE("/:id", userController.DeleteUserByID)
 	}
 }

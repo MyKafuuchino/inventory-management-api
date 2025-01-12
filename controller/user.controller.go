@@ -2,14 +2,12 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"inventory-management/entity"
 	"inventory-management/service"
 	"inventory-management/utils"
+	"inventory-management/validation"
 	"net/http"
 )
-
-var Validate = validator.New()
 
 type UserController struct {
 	userService service.UserService
@@ -21,41 +19,52 @@ func NewUserController(userService service.UserService) *UserController {
 
 func (c *UserController) GetAllUsers(ctx *gin.Context) {
 	users, err := c.userService.GetAllUsers()
+
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(err)
 		return
 	}
-	if len(users) == 0 {
-		err = ctx.Error(utils.NewCustomError(http.StatusNotFound, "No users found create new user"))
-		return
-	}
+
 	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[[]entity.User]("Success get user", users))
 }
 
 func (c *UserController) GetUserById(ctx *gin.Context) {
 	userId := ctx.Param("id")
-	user, err := c.userService.GetUserById(userId)
+
+	user, err := c.userService.GetUserByID(userId)
+
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusNotFound, err.Error()))
-		return
+		err = ctx.Error(err)
 	}
-	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[entity.User]("Success get user", user))
+
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[*entity.User]("Success get user", user))
 }
 
 func (c *UserController) CreateNewUser(ctx *gin.Context) {
-	var user entity.User
+	var user *entity.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, err.Error()))
+		err = ctx.Error(err)
 		return
 	}
-	if err := Validate.Struct(user); err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, "Validation errors", utils.GetErrorValidationMessages(err)...))
+	if err := validation.ValidationHandler[*entity.User](user); err != nil {
+		err = ctx.Error(err)
 		return
 	}
-	createdUser, err := c.userService.CreateNewUser(&user)
+	createdUser, err := c.userService.CreateNewUser(user)
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(http.StatusInternalServerError, err.Error()))
+		err = ctx.Error(err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, utils.NewResponseSuccess[*entity.User]("Success create user", createdUser))
+}
+
+func (c *UserController) DeleteUserByID(ctx *gin.Context) {
+	userId := ctx.Param("id")
+	err := c.userService.DeleteUserByID(userId)
+	if err != nil {
+		err = ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[*entity.User]("Success delete user", nil))
 }
