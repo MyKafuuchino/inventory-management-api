@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 )
@@ -15,37 +14,26 @@ type OrderRepository interface {
 }
 
 type orderRepository struct {
-	db    *gorm.DB
-	query *gorm.DB
+	db *gorm.DB
 }
 
 func NewOrderRepository(db *gorm.DB) OrderRepository {
 	return &orderRepository{db: db}
 }
 
-func (r *orderRepository) QueryInit() {
-	r.query = r.db.Table("orders")
-}
-
 func (r *orderRepository) GetAllOrder() ([]entity.Order, error) {
 	var orders []entity.Order
-	err := r.query.Find(&orders).Error
-
-	if len(orders) == 0 {
-		return nil, errors.New("no orders found")
-	}
-
-	if err != nil {
+	if err := r.db.Table("orders").Find(&orders).Error; err != nil {
 		return nil, err
 	}
 	return orders, nil
 }
 
 func (r *orderRepository) GetOrderById(orderID string) (*entity.Order, error) {
-	var order *entity.Order
-	err := r.query.Where("id = ?", orderID).First(order).Error
-	if err != nil {
-		return nil, errors.New("order not found")
+	order := &entity.Order{}
+	var err error
+	if err = r.db.Table("orders").Where("id = ?", orderID).First(order).Error; err != nil {
+		return nil, err
 	}
 	return order, nil
 }

@@ -12,7 +12,7 @@ type ProductRepository interface {
 	GetProductById(productId string) (*entity.Product, error)
 	CreateNewProduct(product *entity.Product) (*entity.Product, error)
 	UpdateProduct(productId string, product *entity.Product) (*entity.Product, error)
-	DeleteProductById(productId string) (*entity.Product, error)
+	DeleteProductById(productId string) error
 }
 
 type productRepository struct {
@@ -57,16 +57,10 @@ func (r *productRepository) UpdateProduct(productId string, product *entity.Prod
 	return product, nil
 }
 
-func (r *productRepository) DeleteProductById(id string) (*entity.Product, error) {
+func (r *productRepository) DeleteProductById(productID string) error {
 	product := &entity.Product{}
-	if err := r.db.Table("products").Where("id = ?", id).First(product).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("product not found")
-		}
-		return nil, err
+	if err := r.db.Table("products").Where("id = ?", productID).Delete(product).Error; err != nil {
+		return errors.New("failed to delete product " + err.Error())
 	}
-	if err := r.db.Table("products").Where("id = ?", product.ID).Delete(product).Error; err != nil {
-		return nil, errors.New("failed to delete product " + err.Error())
-	}
-	return product, nil
+	return nil
 }

@@ -66,25 +66,43 @@ func (s *productService) CreateNewProduct(body *model.CreateProductRequest) (*en
 }
 
 func (s *productService) UpdateProduct(productId string, body *model.UpdateProductRequest) (*entity.Product, error) {
-	product := &entity.Product{
-		Name:        body.Name,
-		Description: "",
-		Price:       0,
-		Stock:       0,
-		LowStock:    0,
-	}
-	updatedProduct, err := s.productRepository.UpdateProduct(productId, product)
+	existingProduct, err := s.productRepository.GetProductById(productId)
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			err = utils.NewCustomError(http.StatusNotFound, "Product not found")
 			return nil, err
 		}
-		err = utils.NewCustomError(http.StatusInternalServerError, "Error while updating product "+err.Error())
+		err = utils.NewCustomError(http.StatusInternalServerError, "Error while fetching product "+err.Error())
+		return nil, err
+	}
+
+	utils.MapUpdateField(existingProduct, body)
+	updatedProduct, err := s.productRepository.UpdateProduct(productId, existingProduct)
+
+	if err != nil {
+		err = utils.NewCustomError(http.StatusInternalServerError, "failed to update product")
 		return nil, err
 	}
 	return updatedProduct, err
 }
 
 func (s *productService) DeleteProduct(productId string) (*entity.Product, error) {
-	return s.productRepository.DeleteProductById(productId)
+	var err error
+	product := &entity.Product{}
+	if product, err = s.productRepository.GetProductById(productId); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = utils.NewCustomError(http.StatusNotFound, "Product not found")
+			return nil, err
+		}
+		err = utils.NewCustomError(http.StatusInternalServerError, "Error while fetching product "+err.Error())
+		return nil, err
+	}
+
+	if err := s.productRepository.DeleteProductById(productId); err != nil {
+		err = utils.NewCustomError(http.StatusInternalServerError, "Error while deleting product "+err.Error())
+		return nil, err
+	}
+
+	return product, nil
 }

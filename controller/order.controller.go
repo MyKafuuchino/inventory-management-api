@@ -18,8 +18,18 @@ func NewOrderController(orderService service.OrderService) *OrderController {
 func (c *OrderController) GetAllProducts(ctx *gin.Context) {
 	products, err := c.orderService.GetAllOrder()
 	if err != nil {
-		err = ctx.Error(utils.NewCustomError(400, "Failed to get all products "+err.Error()))
+		err = ctx.Error(err)
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.NewResponseSuccess("Success get all products", products))
+}
+
+func (c *OrderController) GetOrderById(ctx *gin.Context) {
+	orderID := ctx.Param("id")
+	order, err := c.orderService.GetOrderById(orderID)
+	if err != nil {
+		err = ctx.Error(err)
+		return
+	}
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess("Success get order by id", order))
 }
