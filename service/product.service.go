@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"inventory-management/entity"
+	"inventory-management/model"
 	"inventory-management/repository"
 	"inventory-management/utils"
 	"net/http"
@@ -12,8 +13,8 @@ import (
 type ProductService interface {
 	GetAllProducts() ([]entity.Product, error)
 	GetProductById(productId string) (*entity.Product, error)
-	CreateNewProduct(product *entity.Product) (*entity.Product, error)
-	UpdateProduct(productId string, product *entity.Product) (*entity.Product, error)
+	CreateNewProduct(body *model.CreateProductRequest) (*entity.Product, error)
+	UpdateProduct(productId string, body *model.UpdateProductRequest) (*entity.Product, error)
 	DeleteProduct(productId string) (*entity.Product, error)
 }
 
@@ -49,16 +50,39 @@ func (s *productService) GetProductById(productId string) (*entity.Product, erro
 	return product, err
 }
 
-func (s *productService) CreateNewProduct(body *entity.Product) (*entity.Product, error) {
-	productBody, err := s.productRepository.CreateNewProduct(body)
+func (s *productService) CreateNewProduct(body *model.CreateProductRequest) (*entity.Product, error) {
+	newProduct := &entity.Product{
+		Name:        body.Name,
+		Description: body.Description,
+		Price:       body.Price,
+		Stock:       body.Stock,
+		LowStock:    body.LowStock,
+	}
+	productBody, err := s.productRepository.CreateNewProduct(newProduct)
 	if err != nil {
 		err = utils.NewCustomError(http.StatusInternalServerError, "Error while creating product "+err.Error())
 	}
 	return productBody, nil
 }
 
-func (s *productService) UpdateProduct(productId string, product *entity.Product) (*entity.Product, error) {
-	return s.productRepository.UpdateProduct(productId, product)
+func (s *productService) UpdateProduct(productId string, body *model.UpdateProductRequest) (*entity.Product, error) {
+	product := &entity.Product{
+		Name:        body.Name,
+		Description: "",
+		Price:       0,
+		Stock:       0,
+		LowStock:    0,
+	}
+	updatedProduct, err := s.productRepository.UpdateProduct(productId, product)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = utils.NewCustomError(http.StatusNotFound, "Product not found")
+			return nil, err
+		}
+		err = utils.NewCustomError(http.StatusInternalServerError, "Error while updating product "+err.Error())
+		return nil, err
+	}
+	return updatedProduct, err
 }
 
 func (s *productService) DeleteProduct(productId string) (*entity.Product, error) {

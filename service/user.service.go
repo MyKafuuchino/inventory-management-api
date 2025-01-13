@@ -3,6 +3,7 @@ package service
 import (
 	"golang.org/x/crypto/bcrypt"
 	"inventory-management/entity"
+	"inventory-management/model"
 	"inventory-management/repository"
 	"inventory-management/utils"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 type UserService interface {
 	GetAllUsers() ([]entity.User, error)
 	GetUserByID(userID string) (*entity.User, error)
-	CreateNewUser(user *entity.User) (*entity.User, error)
+	CreateNewUser(user *model.CreateUserRequest) (*entity.User, error)
 	DeleteUserByID(userID string) error
 }
 
@@ -44,14 +45,20 @@ func (s *userService) GetUserByID(userID string) (*entity.User, error) {
 	return user, nil
 }
 
-func (s *userService) CreateNewUser(body *entity.User) (*entity.User, error) {
+func (s *userService) CreateNewUser(body *model.CreateUserRequest) (*entity.User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
-	body.Password = string(hashedPassword)
 
-	userBody, err := s.userRepo.CreateNewUser(body)
+	newUser := &entity.User{
+		Username: body.Username,
+		FullName: body.FullName,
+		Password: string(hashedPassword),
+		Role:     body.Role,
+	}
+
+	userBody, err := s.userRepo.CreateNewUser(newUser)
 	if err != nil {
 		return nil, utils.NewCustomError(http.StatusBadRequest, err.Error())
 	}

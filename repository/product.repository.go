@@ -47,23 +47,14 @@ func (r *productRepository) CreateNewProduct(product *entity.Product) (*entity.P
 }
 
 func (r *productRepository) UpdateProduct(productId string, product *entity.Product) (*entity.Product, error) {
-	existingProduct := &entity.Product{}
-	query := r.db.Table("products").Where("id = ?", productId)
-	if err := query.First(existingProduct).Error; err != nil {
-		return nil, errors.New("product not found")
-	}
-
+	product.ID = productId
 	product.UpdatedAt = time.Now()
 
-	if err := query.Updates(product).Error; err != nil {
-		return nil, errors.New("failed to update product")
+	if err := r.db.Table("products").Save(product).Error; err != nil {
+		return nil, err
 	}
 
-	updatedProduct := &entity.Product{}
-	if err := query.First(updatedProduct).Error; err != nil {
-		return nil, errors.New("failed to retrieve updated product")
-	}
-	return updatedProduct, nil
+	return product, nil
 }
 
 func (r *productRepository) DeleteProductById(id string) (*entity.Product, error) {

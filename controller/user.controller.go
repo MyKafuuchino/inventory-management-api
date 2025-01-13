@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"inventory-management/entity"
+	"inventory-management/model"
 	"inventory-management/service"
 	"inventory-management/utils"
 	"inventory-management/validation"
@@ -41,16 +42,16 @@ func (c *UserController) GetUserById(ctx *gin.Context) {
 }
 
 func (c *UserController) CreateNewUser(ctx *gin.Context) {
-	var user *entity.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	var userRequest *model.CreateUserRequest
+	if err := ctx.ShouldBindJSON(&userRequest); err != nil {
 		err = ctx.Error(err)
 		return
 	}
-	if err := validation.ValidationHandler[*entity.User](user); err != nil {
+	if err := validation.ValidationHandler(userRequest); err != nil {
 		err = ctx.Error(err)
 		return
 	}
-	createdUser, err := c.userService.CreateNewUser(user)
+	createdUser, err := c.userService.CreateNewUser(userRequest)
 	if err != nil {
 		err = ctx.Error(err)
 		return

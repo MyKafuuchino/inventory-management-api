@@ -18,14 +18,14 @@ func NewAuthController(authService service.AuthService) *AuthController {
 }
 
 func (c *AuthController) Login(ctx *gin.Context) {
-	var loginBody model.Login
+	var loginBody model.LoginRequest
 
 	if err := ctx.ShouldBindJSON(&loginBody); err != nil {
 		err = ctx.Error(err)
 		return
 	}
 
-	if err := validation.ValidationHandler[*model.Login](&loginBody); err != nil {
+	if err := validation.ValidationHandler[*model.LoginRequest](&loginBody); err != nil {
 		err = ctx.Error(err)
 		return
 	}

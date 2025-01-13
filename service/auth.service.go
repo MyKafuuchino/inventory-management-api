@@ -12,7 +12,7 @@ import (
 )
 
 type AuthService interface {
-	Login(body *model.Login) (*entity.User, string, error)
+	Login(body *model.LoginRequest) (*entity.User, string, error)
 }
 
 type authService struct {
@@ -24,7 +24,7 @@ func NewAuthService(authRepository repository.AuthRepository, jwtSecret []byte) 
 	return &authService{authRepository: authRepository, jwtSecret: jwtSecret}
 }
 
-func (s *authService) Login(body *model.Login) (*entity.User, string, error) {
+func (s *authService) Login(body *model.LoginRequest) (*entity.User, string, error) {
 
 	user, err := s.authRepository.Login(body.Username)
 

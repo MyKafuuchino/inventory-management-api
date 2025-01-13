@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"inventory-management/entity"
+	"inventory-management/model"
 	"inventory-management/service"
 	"inventory-management/utils"
 	"inventory-management/validation"
@@ -40,18 +41,18 @@ func (c *ProductController) GetProductById(ctx *gin.Context) {
 }
 
 func (c *ProductController) CreateNewProduct(ctx *gin.Context) {
-	product := &entity.Product{}
-	if err := ctx.ShouldBindJSON(product); err != nil {
+	productRequest := &model.CreateProductRequest{}
+	if err := ctx.ShouldBindJSON(productRequest); err != nil {
 		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, err.Error()))
 		return
 	}
 
-	if err := validation.ValidationHandler(product); err != nil {
+	if err := validation.ValidationHandler(productRequest); err != nil {
 		err = ctx.Error(err)
 		return
 	}
 
-	createdProduct, err := c.productService.CreateNewProduct(product)
+	createdProduct, err := c.productService.CreateNewProduct(productRequest)
 	if err != nil {
 		err = ctx.Error(err)
 		return
