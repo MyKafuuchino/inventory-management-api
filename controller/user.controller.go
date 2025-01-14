@@ -56,6 +56,7 @@ func (c *UserController) CreateNewUser(ctx *gin.Context) {
 		err = ctx.Error(err)
 		return
 	}
+
 	ctx.JSON(http.StatusCreated, utils.NewResponseSuccess[*entity.User]("Success create user", createdUser))
 }
 

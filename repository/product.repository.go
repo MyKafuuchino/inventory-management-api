@@ -13,6 +13,7 @@ type ProductRepository interface {
 	CreateNewProduct(product *entity.Product) (*entity.Product, error)
 	UpdateProduct(productId string, product *entity.Product) (*entity.Product, error)
 	DeleteProductById(productId string) error
+	GetProductByIDs(productIDs []string) ([]entity.Product, error)
 }
 
 type productRepository struct {
@@ -63,4 +64,12 @@ func (r *productRepository) DeleteProductById(productID string) error {
 		return errors.New("failed to delete product " + err.Error())
 	}
 	return nil
+}
+
+func (r *productRepository) GetProductByIDs(productIDs []string) ([]entity.Product, error) {
+	var products []entity.Product
+	if err := r.db.Where("id IN ?", productIDs).Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
 }

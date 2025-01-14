@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 )
@@ -10,7 +11,6 @@ type OrderRepository interface {
 	GetOrderById(orderID string) (*entity.Order, error)
 	CreateNewOrder(order *entity.Order) (*entity.Order, error)
 	UpdateOrderByID(orderID string, order *entity.Order) (*entity.Order, error)
-	DeleteOrderById(orderID string) error
 }
 
 type orderRepository struct {
@@ -39,16 +39,16 @@ func (r *orderRepository) GetOrderById(orderID string) (*entity.Order, error) {
 }
 
 func (r *orderRepository) CreateNewOrder(order *entity.Order) (*entity.Order, error) {
-	//TODO implement me
-	panic("implement me")
+	if err := r.db.Table("orders").Create(order).Error; err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return order, nil
 }
 
 func (r *orderRepository) UpdateOrderByID(orderID string, order *entity.Order) (*entity.Order, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r *orderRepository) DeleteOrderById(orderID string) error {
-	//TODO implement me
-	panic("implement me")
+	if err := r.db.Save(order).Error; err != nil {
+		return nil, err
+	}
+	return order, nil
 }

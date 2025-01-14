@@ -1,14 +1,15 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
 type Order struct {
 	Base
-	TotalPrice int       `gorm:"not null;" json:"total_price" validate:"required"`
-	Status     string    `gorm:"default:pending" json:"status" validate:"omitempty,oneof=pending processed completed canceled"`
-	CreatedAt  time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt  time.Time `gorm:"autoUpdateTime" json:"updated_at"`
-
-	UserID   string    `gorm:"not null" json:"userId" validate:"required"`
-	Products []Product `gorm:"many2many:order_detail;" json:"products;omitempty"`
+	UserID       string        `json:"user_id"`
+	TotalPrice   int           `json:"total_price"`
+	Status       string        `json:"status"`
+	CreatedAt    time.Time     `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt    time.Time     `gorm:"autoUpdateTime" json:"updated_at"`
+	OrderDetails []OrderDetail `gorm:"foreignKey:OrderID" json:"order_details,omitempty"`
 }
