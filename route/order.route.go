@@ -12,8 +12,9 @@ import (
 func OrderRoute(ctx *gin.RouterGroup) {
 	orderRepository := repository.NewOrderRepository(database.DB)
 	productRepository := repository.NewProductRepository(database.DB)
+	orderDetailRepo := repository.NewOrderDetailRepository(database.DB)
 
-	orderService := service.NewOrderService(orderRepository, productRepository)
+	orderService := service.NewOrderService(orderRepository, productRepository, orderDetailRepo)
 	orderController := controller.NewOrderController(orderService)
 
 	order := ctx.Group("/orders")
@@ -21,5 +22,6 @@ func OrderRoute(ctx *gin.RouterGroup) {
 		order.GET("", orderController.GetAllProducts)
 		order.GET("/:id", orderController.GetOrderById)
 		order.POST("", middleware.ProtectRoute("admin"), orderController.CreateOrder)
+		order.PUT("/status/:id", orderController.UpdateOrderStatus)
 	}
 }

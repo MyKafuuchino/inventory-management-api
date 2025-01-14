@@ -1,7 +1,9 @@
 package service
 
 import (
+	"errors"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"inventory-management/entity"
 	"inventory-management/model"
 	"inventory-management/repository"
@@ -40,6 +42,9 @@ func (s *userService) GetAllUsers() ([]entity.User, error) {
 func (s *userService) GetUserByID(userID string) (*entity.User, error) {
 	user, err := s.userRepo.GetUserById(userID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, utils.NewCustomError(http.StatusNotFound, "User not found")
+		}
 		return nil, utils.NewCustomError(http.StatusBadRequest, err.Error())
 	}
 	return user, nil

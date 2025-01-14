@@ -1,16 +1,15 @@
 package repository
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 )
 
 type OrderRepository interface {
 	GetAllOrder() ([]entity.Order, error)
-	GetOrderById(orderID string) (*entity.Order, error)
 	CreateNewOrder(order *entity.Order) (*entity.Order, error)
-	UpdateOrderByID(orderID string, order *entity.Order) (*entity.Order, error)
+	GetOrderById(orderId string) (*entity.Order, error)
+	UpdateOrderStatus(order *entity.Order) (*entity.Order, error)
 }
 
 type orderRepository struct {
@@ -29,25 +28,23 @@ func (r *orderRepository) GetAllOrder() ([]entity.Order, error) {
 	return orders, nil
 }
 
-func (r *orderRepository) GetOrderById(orderID string) (*entity.Order, error) {
-	order := &entity.Order{}
-	var err error
-	if err = r.db.Table("orders").Where("id = ?", orderID).First(order).Error; err != nil {
-		return nil, err
-	}
-	return order, nil
-}
-
 func (r *orderRepository) CreateNewOrder(order *entity.Order) (*entity.Order, error) {
 	if err := r.db.Table("orders").Create(order).Error; err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	return order, nil
 }
 
-func (r *orderRepository) UpdateOrderByID(orderID string, order *entity.Order) (*entity.Order, error) {
-	if err := r.db.Save(order).Error; err != nil {
+func (r *orderRepository) GetOrderById(orderId string) (*entity.Order, error) {
+	order := &entity.Order{}
+	if err := r.db.Table("orders").Where("id = ?", orderId).First(order).Error; err != nil {
+		return nil, err
+	}
+	return order, nil
+}
+
+func (r *orderRepository) UpdateOrderStatus(order *entity.Order) (*entity.Order, error) {
+	if err := r.db.Table("orders").Save(&order).Error; err != nil {
 		return nil, err
 	}
 	return order, nil

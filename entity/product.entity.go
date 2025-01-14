@@ -12,5 +12,5 @@ type Product struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 
-	Orders []Order `gorm:"many2many:user_groups" json:"orders,omitempty"`
+	OrdersDetails []OrderDetail `gorm:"foreignKey:ProductID" json:"orders,omitempty"`
 }

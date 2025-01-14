@@ -30,13 +30,14 @@ func (c *OrderController) GetAllProducts(ctx *gin.Context) {
 
 func (c *OrderController) GetOrderById(ctx *gin.Context) {
 	orderID := ctx.Param("id")
-	order, err := c.orderService.GetOrderById(orderID)
+	order, err := c.orderService.GetOrderDetailById(orderID)
 	if err != nil {
 		err = ctx.Error(err)
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.NewResponseSuccess("Success get order by id", order))
 }
+
 func (c *OrderController) CreateOrder(ctx *gin.Context) {
 	var orderRequest *model.CreateOrderRequest
 	if err := ctx.ShouldBindJSON(&orderRequest); err != nil {
@@ -73,4 +74,22 @@ func (c *OrderController) CreateOrder(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, utils.NewResponseSuccess("Success create order", order))
+}
+
+func (c *OrderController) UpdateOrderStatus(ctx *gin.Context) {
+	var orderRequest *model.UpdateOrderStatusRequest
+	var orderID = ctx.Param("id")
+
+	if err := ctx.ShouldBindJSON(&orderRequest); err != nil {
+		err = ctx.Error(err)
+	}
+
+	order, err := c.orderService.UpdateOrderService(orderID, orderRequest)
+
+	if err != nil {
+		err = ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess("Success update order status", order))
 }

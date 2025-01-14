@@ -12,19 +12,19 @@ import (
 
 type OrderService interface {
 	GetAllOrder() ([]entity.Order, error)
-	GetOrderById(orderID string) (*entity.Order, error)
-	CreateNewOrder(order *model.CreateOrderRequest) (*entity.Order, error)
-	UpdateOrderByID(orderID string, body *entity.Order) (*entity.Order, error)
-	DeleteOrderById(orderID string) error
+	GetOrderDetailById(orderID string) (*model.OrderResponse, error)
+	CreateNewOrder(order *model.CreateOrderRequest) (*model.OrderResponse, error)
+	UpdateOrderService(orderID string, status *model.UpdateOrderStatusRequest) (*entity.Order, error)
 }
 
 type orderService struct {
 	orderRepository   repository.OrderRepository
 	productRepository repository.ProductRepository
+	orderDetailRepo   repository.OrderDetailRepository
 }
 
-func NewOrderService(orderRepository repository.OrderRepository, productRepository repository.ProductRepository) OrderService {
-	return &orderService{orderRepository: orderRepository, productRepository: productRepository}
+func NewOrderService(orderRepository repository.OrderRepository, productRepository repository.ProductRepository, orderDetailRepo repository.OrderDetailRepository) OrderService {
+	return &orderService{orderRepository: orderRepository, productRepository: productRepository, orderDetailRepo: orderDetailRepo}
 }
 
 func (s *orderService) GetAllOrder() ([]entity.Order, error) {
@@ -38,20 +38,38 @@ func (s *orderService) GetAllOrder() ([]entity.Order, error) {
 	return orders, nil
 }
 
-func (s *orderService) GetOrderById(orderID string) (*entity.Order, error) {
-	order, err := s.orderRepository.GetOrderById(orderID)
+func (s *orderService) GetOrderDetailById(orderID string) (*model.OrderResponse, error) {
+	order, err := s.orderDetailRepo.GetOrderDetailByID(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			err := utils.NewCustomError(http.StatusNotFound, "order not found")
 			return nil, err
 		}
-		err := utils.NewCustomError(http.StatusInternalServerError, "failed to get order")
+		err := utils.NewCustomError(http.StatusInternalServerError, err.Error())
 		return nil, err
 	}
-	return order, nil
+
+	response := &model.OrderResponse{
+		ID:         order.ID,
+		UserID:     order.UserID,
+		TotalPrice: order.TotalPrice,
+		Status:     order.Status,
+	}
+
+	for _, detail := range order.OrderDetails {
+		response.OrderDetails = append(response.OrderDetails, model.OrderDetailResponse{
+			OrderID:   detail.OrderID,
+			ProductID: detail.ProductID,
+			Quantity:  detail.Quantity,
+			Price:     detail.Price,
+			Product:   detail.Product,
+		})
+	}
+
+	return response, nil
 }
 
-func (s *orderService) CreateNewOrder(request *model.CreateOrderRequest) (*entity.Order, error) {
+func (s *orderService) CreateNewOrder(request *model.CreateOrderRequest) (*model.OrderResponse, error) {
 	products, err := s.productRepository.GetProductByIDs(request.ProductIDs)
 	if err != nil {
 		return nil, utils.NewCustomError(http.StatusInternalServerError, "failed to fetch products")
@@ -84,16 +102,44 @@ func (s *orderService) CreateNewOrder(request *model.CreateOrderRequest) (*entit
 		UserID:       request.UserID,
 		OrderDetails: orderDetails,
 	}
+	orderDetail := &entity.Order{}
+	orderDetail, err = s.orderRepository.CreateNewOrder(order)
+	if err != nil {
+		return nil, utils.NewCustomError(http.StatusInternalServerError, "failed to create order")
+	}
 
-	orderDetail, err := s.orderRepository.CreateNewOrder(order)
-	return orderDetail, err
+	response := &model.OrderResponse{
+		ID: orderDetail.ID,
+	}
+
+	for _, detail := range orderDetails {
+		response.OrderDetails = append(response.OrderDetails, model.OrderDetailResponse{
+			OrderID:   detail.OrderID,
+			ProductID: detail.ProductID,
+			Quantity:  detail.Quantity,
+			Price:     detail.Price,
+			Product:   detail.Product,
+		})
+	}
+	return response, nil
 }
 
-func (s *orderService) UpdateOrderByID(orderID string, body *entity.Order) (*entity.Order, error) {
-	panic("implement me")
-}
+func (s *orderService) UpdateOrderService(orderID string, orderRequest *model.UpdateOrderStatusRequest) (*entity.Order, error) {
+	var err error
+	var orderExist *entity.Order
 
-func (s *orderService) DeleteOrderById(orderID string) error {
-	//TODO implement me
-	panic("implement me")
+	if orderExist, err = s.orderRepository.GetOrderById(orderID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, utils.NewCustomError(http.StatusNotFound, "order not found")
+		}
+		return nil, utils.NewCustomError(http.StatusInternalServerError, "failed to fetch order")
+	}
+
+	orderExist.Status = orderRequest.Status
+
+	var order *entity.Order
+	if order, err = s.orderRepository.UpdateOrderStatus(orderExist); err != nil {
+		return nil, utils.NewCustomError(http.StatusInternalServerError, "failed to update order")
+	}
+	return order, nil
 }

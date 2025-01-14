@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 )
@@ -11,6 +10,8 @@ type UserRepository interface {
 	GetUserById(id string) (*entity.User, error)
 	CreateNewUser(body *entity.User) (*entity.User, error)
 	DeleteUserByID(userID string) (int64, error)
+
+	UserOrders(userID string) (*entity.User, error)
 }
 
 type userRepository struct {
@@ -30,11 +31,8 @@ func (r *userRepository) GetAllUsers() ([]entity.User, error) {
 }
 
 func (r *userRepository) GetUserById(id string) (*entity.User, error) {
-	var user *entity.User
-	if err := r.db.Table("users").Where("id = ?", id).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
+	var user = &entity.User{}
+	if err := r.db.Table("users").Where("id = ?", id).Preload("Orders").First(user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -53,4 +51,12 @@ func (r *userRepository) DeleteUserByID(userID string) (int64, error) {
 		return 0, result.Error
 	}
 	return result.RowsAffected, nil
+}
+
+func (r *userRepository) UserOrders(userID string) (*entity.User, error) {
+	var user *entity.User = &entity.User{}
+	if err := r.db.Table("users").Where("id = ?", userID).Preload("Orders").Find(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
 }
