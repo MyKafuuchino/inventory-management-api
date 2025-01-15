@@ -1,6 +1,6 @@
 CREATE TABLE products
 (
-    id          CHAR(36) PRIMARY KEY,
+    id          INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
     name        VARCHAR(100)          NOT NULL,
     description TEXT,
     price       INT                   NOT NULL,

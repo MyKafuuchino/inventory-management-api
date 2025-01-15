@@ -40,7 +40,11 @@ func (s *userService) GetAllUsers() ([]entity.User, error) {
 }
 
 func (s *userService) GetUserByID(userID string) (*entity.User, error) {
-	user, err := s.userRepo.GetUserById(userID)
+	uUserID, err := utils.ParseStringToUint(userID)
+	if err != nil {
+		return nil, utils.NewCustomError(http.StatusBadRequest, err.Error())
+	}
+	user, err := s.userRepo.GetUserById(uUserID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, utils.NewCustomError(http.StatusNotFound, "User not found")
@@ -71,7 +75,13 @@ func (s *userService) CreateNewUser(body *model.CreateUserRequest) (*entity.User
 }
 
 func (s *userService) DeleteUserByID(userID string) error {
-	rowsAffected, err := s.userRepo.DeleteUserByID(userID)
+	uUserID, err := utils.ParseStringToUint(userID)
+
+	if err != nil {
+		return utils.NewCustomError(http.StatusBadRequest, err.Error())
+	}
+
+	rowsAffected, err := s.userRepo.DeleteUserByID(uUserID)
 
 	if err != nil {
 		return utils.NewCustomError(http.StatusBadRequest, err.Error())

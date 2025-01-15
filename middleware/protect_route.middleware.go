@@ -51,9 +51,9 @@ func ProtectRoute(roles ...string) gin.HandlerFunc {
 
 		fmt.Println("Claims ", claims)
 
-		userID, ok := claims["userId"].(string)
+		userID, ok := claims["userId"].(float64)
 		if !ok {
-			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "UserId not found in token"))
+			err = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "UserId not found in token"))
 			ctx.Abort()
 			return
 		}

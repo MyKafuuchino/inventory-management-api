@@ -7,7 +7,7 @@ import (
 )
 
 type JwtService interface {
-	GenJwtToken(userId string) (string, error)
+	GenJwtToken(userId uint) (string, error)
 	ValidateToken(tokenString string) (*jwt.Token, error)
 }
 
@@ -19,11 +19,12 @@ func NewJwtService(secretKey []byte) JwtService {
 	return jwtService{secretKey: secretKey}
 }
 
-func (j jwtService) GenJwtToken(userId string) (string, error) {
+func (j jwtService) GenJwtToken(userId uint) (string, error) {
 	claims := jwt.MapClaims{
 		"userId": userId,
 		"exp":    time.Now().Add(1 * time.Hour).Unix(),
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(j.secretKey)
 }
