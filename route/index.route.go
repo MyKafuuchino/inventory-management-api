@@ -7,5 +7,4 @@ func InitRoute(ctx *gin.Engine) {
 	UserRoute(api)
 	AuthRoute(api)
 	ProductRoute(api)
-	OrderRoute(api)
 }

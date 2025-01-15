@@ -36,6 +36,7 @@ func (c *UserController) GetUserById(ctx *gin.Context) {
 
 	if err != nil {
 		err = ctx.Error(err)
+		return
 	}
 
 	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[*entity.User]("Success get user", user))

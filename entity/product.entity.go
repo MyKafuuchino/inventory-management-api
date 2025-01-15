@@ -11,6 +11,4 @@ type Product struct {
 	LowStock    int       `gorm:"default:0" json:"low_stock"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updated_at"`
-
-	OrdersDetails []OrderDetail `gorm:"foreignKey:ProductID" json:"orders,omitempty"`
 }

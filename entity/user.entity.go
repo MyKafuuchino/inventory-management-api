@@ -12,6 +12,4 @@ type User struct {
 	Role      string    `gorm:"default:'customer'" json:"role,omitempty"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
-
-	Orders []Order `gorm:"foreignKey:UserID" json:"orders,omitempty"`
 }
