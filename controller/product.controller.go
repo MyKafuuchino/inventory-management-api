@@ -83,7 +83,7 @@ func (c *ProductController) UpdateProduct(ctx *gin.Context) {
 
 func (c *ProductController) DeleteProductById(ctx *gin.Context) {
 	productId := ctx.Param("id")
-	product, err := c.productService.GetProductById(productId)
+	product, err := c.productService.DeleteProduct(productId)
 	if err != nil {
 		err = ctx.Error(err)
 		return

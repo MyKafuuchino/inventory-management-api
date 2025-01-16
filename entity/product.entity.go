@@ -9,5 +9,7 @@ type Product struct {
 	Price       int    `gorm:"not null" json:"price"`
 	Stock       int    `gorm:"default:0" json:"stock"`
 	LowStock    int    `gorm:"default:0" json:"low_stock"`
+
+	Order []Order `gorm:"many2many:order_details" json:"order"`
 	model.History
 }

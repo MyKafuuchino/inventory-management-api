@@ -74,7 +74,9 @@ func (s *productService) UpdateProduct(productId string, body *model.UpdateProdu
 	if err != nil {
 		err = utils.NewCustomError(http.StatusInternalServerError, err.Error())
 	}
+
 	existingProduct, err := s.productRepository.GetProductById(u)
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			err = utils.NewCustomError(http.StatusNotFound, "Product not found")
@@ -92,13 +94,11 @@ func (s *productService) UpdateProduct(productId string, body *model.UpdateProdu
 		err = utils.NewCustomError(http.StatusInternalServerError, err.Error())
 	}
 
-	updatedProduct, err := s.productRepository.UpdateProduct(u, existingProduct)
-
-	if err != nil {
+	if err := s.productRepository.UpdateProduct(u, existingProduct); err != nil {
 		err = utils.NewCustomError(http.StatusInternalServerError, "failed to update product")
 		return nil, err
 	}
-	return updatedProduct, err
+	return existingProduct, err
 }
 
 func (s *productService) DeleteProduct(productId string) (*entity.Product, error) {

@@ -32,7 +32,7 @@ func (r *userRepository) GetAllUsers() ([]entity.User, error) {
 
 func (r *userRepository) GetUserById(id uint) (*entity.User, error) {
 	var user = &entity.User{}
-	if err := r.db.Table("users").Where("id = ?", id).Preload("Orders").First(user).Error; err != nil {
+	if err := r.db.Table("users").Where("id = ?", id).First(user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -55,7 +55,7 @@ func (r *userRepository) DeleteUserByID(userID uint) (int64, error) {
 
 func (r *userRepository) UserOrders(userID uint) (*entity.User, error) {
 	var user *entity.User = &entity.User{}
-	if err := r.db.Table("users").Where("id = ?", userID).Preload("Orders").Find(user).Error; err != nil {
+	if err := r.db.Table("users").Where("id = ?", userID).Find(user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil

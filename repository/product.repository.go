@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 	"time"
@@ -11,7 +11,7 @@ type ProductRepository interface {
 	GetAllProducts() ([]entity.Product, error)
 	GetProductById(productId uint) (*entity.Product, error)
 	CreateNewProduct(product *entity.Product) (*entity.Product, error)
-	UpdateProduct(productId uint, product *entity.Product) (*entity.Product, error)
+	UpdateProduct(productId uint, reqProduct *entity.Product) error
 	DeleteProductById(productId uint) error
 
 	GetProductsByIDs(productIDs []uint) ([]entity.Product, error)
@@ -48,27 +48,29 @@ func (r *productRepository) CreateNewProduct(product *entity.Product) (*entity.P
 	return product, nil
 }
 
-func (r *productRepository) UpdateProduct(productId uint, product *entity.Product) (*entity.Product, error) {
-	product.ID = productId
-	product.UpdatedAt = time.Now()
+func (r *productRepository) UpdateProduct(productId uint, reqProduct *entity.Product) error {
+	reqProduct.ID = productId
+	reqProduct.UpdatedAt = time.Now()
 
-	if err := r.db.Table("products").Save(product).Error; err != nil {
-		return nil, err
+	if err := r.db.Table("products").Save(reqProduct).Error; err != nil {
+		return err
 	}
 
-	return product, nil
+	return nil
 }
 
 func (r *productRepository) DeleteProductById(productID uint) error {
-	product := &entity.Product{}
-	if err := r.db.Table("products").Where("id = ?", productID).Delete(product).Error; err != nil {
-		return errors.New("failed to delete product " + err.Error())
+	if err := r.db.Debug().Table("products").Where("id = ?", productID).Delete(&entity.Product{}).Error; err != nil {
+		return fmt.Errorf("failed to delete product: %w", err)
 	}
 	return nil
 }
 
 func (r *productRepository) GetProductsByIDs(productIDs []uint) ([]entity.Product, error) {
 	var products []entity.Product
+	if len(productIDs) == 0 {
+		return nil, fmt.Errorf("product IDs cannot be empty")
+	}
 	if err := r.db.Where("id IN ?", productIDs).Find(&products).Error; err != nil {
 		return nil, err
 	}
