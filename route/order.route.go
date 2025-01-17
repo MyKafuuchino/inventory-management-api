@@ -15,8 +15,9 @@ func OrderRoute(ctx *gin.RouterGroup) {
 	userRepo := repository.NewUserRepository(db)
 	orderDetailRepo := repository.NewOrderDetailRepository(db)
 	productRepo := repository.NewProductRepository(db)
+	transactionRepo := repository.NewTransactionRepository(db)
 
-	orderService := service.NewOrderService(orderRepo, userRepo, orderDetailRepo, productRepo)
+	orderService := service.NewOrderService(orderRepo, userRepo, orderDetailRepo, productRepo, transactionRepo)
 	orderController := controller.NewOrderController(orderService)
 
 	order := ctx.Group("/orders")

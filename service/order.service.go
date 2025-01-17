@@ -21,10 +21,11 @@ type orderService struct {
 	userRepo        repository.UserRepository
 	orderDetailRepo repository.OrderDetailRepository
 	productRepo     repository.ProductRepository
+	transactionRepo repository.TransactionRepository
 }
 
-func NewOrderService(orderRepo repository.OrderRepository, userRepo repository.UserRepository, orderDetailRepo repository.OrderDetailRepository, productRepo repository.ProductRepository) OrderService {
-	return &orderService{orderRepo: orderRepo, userRepo: userRepo, orderDetailRepo: orderDetailRepo, productRepo: productRepo}
+func NewOrderService(orderRepo repository.OrderRepository, userRepo repository.UserRepository, orderDetailRepo repository.OrderDetailRepository, productRepo repository.ProductRepository, transactionRepo repository.TransactionRepository) OrderService {
+	return &orderService{orderRepo: orderRepo, userRepo: userRepo, orderDetailRepo: orderDetailRepo, productRepo: productRepo, transactionRepo: transactionRepo}
 }
 
 func (s *orderService) GetAllOrders() ([]entity.Order, error) {
@@ -126,11 +127,26 @@ func (s *orderService) CreateOrderWithDetail(reqOrder *model.CreateOrderRequest)
 
 	orderDetailResponse := make([]model.OrderDetailResponse, len(newOrderDetail))
 	for i, od := range newOrderDetail {
-		orderDetailResponse[i] = model.OrderDetailResponse{
-			ProductID: od.ProductID,
-			Quantity:  od.Quantity,
-			Price:     od.Price,
+		for _, p := range products {
+			orderDetailResponse[i] = model.OrderDetailResponse{
+				ProductName: p.Name,
+				ProductID:   od.ProductID,
+				Quantity:    od.Quantity,
+				Price:       od.Price,
+			}
+			break
 		}
+	}
+
+	var createTransaction = &entity.Transaction{
+		OrderID:       newOrder.ID,
+		UserID:        reqOrder.UserID,
+		TotalPrice:    0,
+		PaymentMethod: "",
+	}
+
+	if err := s.transactionRepo.CreateTransaction(createTransaction); err != nil {
+		return nil, utils.NewCustomError(http.StatusInternalServerError, "Failed to create transaction "+err.Error())
 	}
 
 	orderResponse := &model.OrderResponse{
