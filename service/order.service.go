@@ -33,6 +33,9 @@ func (s *orderService) GetAllOrders() ([]entity.Order, error) {
 	if err != nil {
 		return nil, utils.NewCustomError(http.StatusBadRequest, err.Error())
 	}
+	if len(orders) == 0 {
+		return nil, utils.NewCustomError(http.StatusBadRequest, "no orders found")
+	}
 	return orders, nil
 }
 
@@ -64,7 +67,6 @@ func (s *orderService) GetOrderDetailById(orderId string) (*model.OrderResponse,
 		ID:          order.ID,
 		UserID:      order.UserID,
 		TotalPrice:  order.TotalPrice,
-		Status:      order.Status,
 		OrderDetail: orderDetailResponse,
 	}
 
@@ -115,9 +117,10 @@ func (s *orderService) CreateOrderWithDetail(reqOrder *model.CreateOrderRequest)
 	}
 
 	newOrder := &entity.Order{
-		UserID:     reqOrder.UserID,
-		TotalPrice: totalPrice,
-		Status:     reqOrder.Status,
+		ID:          0,
+		UserID:      reqOrder.UserID,
+		OrderStatus: reqOrder.OrderStatus,
+		TotalPrice:  totalPrice,
 	}
 
 	err = s.orderRepo.CreateOrderWithDetail(newOrder, newOrderDetail)
@@ -141,7 +144,6 @@ func (s *orderService) CreateOrderWithDetail(reqOrder *model.CreateOrderRequest)
 	var createTransaction = &entity.Transaction{
 		OrderID:       newOrder.ID,
 		UserID:        reqOrder.UserID,
-		TotalPrice:    0,
 		PaymentMethod: "",
 	}
 
@@ -153,7 +155,7 @@ func (s *orderService) CreateOrderWithDetail(reqOrder *model.CreateOrderRequest)
 		ID:          newOrder.ID,
 		UserID:      newOrder.UserID,
 		TotalPrice:  newOrder.TotalPrice,
-		Status:      newOrder.Status,
+		OrderStatus: newOrder.OrderStatus,
 		OrderDetail: orderDetailResponse,
 	}
 

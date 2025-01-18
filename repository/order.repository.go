@@ -3,12 +3,14 @@ package repository
 import (
 	"gorm.io/gorm"
 	"inventory-management/entity"
+	"time"
 )
 
 type OrderRepository interface {
 	GetAllOrders() ([]entity.Order, error)
 	GetOrderByID(orderID uint) (*entity.Order, error)
 	CreateOrderWithDetail(reqOrder *entity.Order, orderDetails []entity.OrderDetail) error
+	UpdateOrderStatus(reqOrder *entity.Order) error
 }
 
 type orderRepository struct {
@@ -48,6 +50,33 @@ func (r orderRepository) CreateOrderWithDetail(reqOrder *entity.Order, orderDeta
 	}
 
 	if err := tx.Create(orderDetails).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}
+
+func (r orderRepository) UpdateOrderStatus(reqOrder *entity.Order) error {
+	tx := r.db.Begin()
+
+	if err := tx.Model(&entity.Order{}).
+		Where("id = ?", reqOrder.ID).
+		Updates(map[string]interface{}{
+			"order_status": reqOrder.OrderStatus,
+			"total_price":  reqOrder.TotalPrice,
+		}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Model(&entity.Transaction{}).
+		Where("order_id = ?", reqOrder.ID).
+		Updates(map[string]interface{}{
+			"payment_status": reqOrder.Transaction.PaymentStatus,
+			"payment_method": reqOrder.Transaction.PaymentMethod,
+			"transaction_at": time.Now(),
+		}).Error; err != nil {
 		tx.Rollback()
 		return err
 	}

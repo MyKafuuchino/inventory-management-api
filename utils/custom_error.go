@@ -9,7 +9,7 @@ type CustomError struct {
 }
 
 func (e *CustomError) Error() string {
-	return fmt.Sprintf("Status %d, Message %s\n", e.StatusCode, e.Message)
+	return fmt.Sprintf("OrderStatus %d, Message %s\n", e.StatusCode, e.Message)
 }
 
 func NewCustomError(statusCode int, message string, errors ...string) *CustomError {

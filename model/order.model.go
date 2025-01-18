@@ -2,7 +2,7 @@ package model
 
 type CreateOrderRequest struct {
 	UserID       uint                 `json:"user_id"`
-	Status       string               `json:"status,omitempty" validate:"oneof=pending processed completed canceled"`
+	OrderStatus  string               `json:"order_status,omitempty" validate:"oneof=pending processed completed canceled"`
 	OrderDetails []OrderDetailRequest `json:"order_details" validate:"required"`
 }
 
@@ -14,10 +14,10 @@ type OrderDetailRequest struct {
 }
 
 type OrderResponse struct {
-	ID         uint   `json:"id"`
-	UserID     uint   `json:"user_id"`
-	TotalPrice int    `json:"total_price"`
-	Status     string `json:"status"`
+	ID          uint   `json:"id"`
+	UserID      uint   `json:"user_id"`
+	TotalPrice  int    `json:"total_price"`
+	OrderStatus string `json:"order_status"`
 
 	OrderDetail []OrderDetailResponse `json:"order_detail"`
 }
