@@ -8,6 +8,7 @@ import (
 	"inventory-management/utils"
 	"inventory-management/validation"
 	"net/http"
+	"strconv"
 )
 
 type ProductController struct {
@@ -19,12 +20,30 @@ func NewProductController(productService service.ProductService) *ProductControl
 }
 
 func (c *ProductController) GetAllProducts(ctx *gin.Context) {
-	products, err := c.productService.GetAllProducts()
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+
+	products, total, totalPages, err := c.productService.GetAllProducts(page, pageSize)
 	if err != nil {
 		err = ctx.Error(err)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.NewResponseSuccess[[]entity.Product]("Success get user", products))
+
+	if len(products) == 0 {
+		err = ctx.Error(err)
+		return
+	}
+
+	response := utils.NewPaginatedResponse(
+		"Success fetching products",
+		products,
+		total,
+		totalPages,
+		page,
+		pageSize,
+	)
+
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (c *ProductController) GetProductById(ctx *gin.Context) {

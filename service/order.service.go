@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 	"inventory-management/model"
@@ -11,7 +12,7 @@ import (
 )
 
 type OrderService interface {
-	GetAllOrders() ([]entity.Order, error)
+	GetAllOrders(page, pageSize int) ([]model.GetAllOrdersResponse, int64, int, error)
 	GetOrderDetailById(orderID string) (*model.OrderResponse, error)
 	CreateOrderWithDetail(reqOrder *model.CreateOrderRequest) (*model.OrderResponse, error)
 }
@@ -28,15 +29,25 @@ func NewOrderService(orderRepo repository.OrderRepository, userRepo repository.U
 	return &orderService{orderRepo: orderRepo, userRepo: userRepo, orderDetailRepo: orderDetailRepo, productRepo: productRepo, transactionRepo: transactionRepo}
 }
 
-func (s *orderService) GetAllOrders() ([]entity.Order, error) {
-	orders, err := s.orderRepo.GetAllOrders()
+func (s *orderService) GetAllOrders(page, pageSize int) ([]model.GetAllOrdersResponse, int64, int, error) {
+	orders, total, totalPages, err := s.orderRepo.GetAllOrders(page, pageSize)
 	if err != nil {
-		return nil, utils.NewCustomError(http.StatusBadRequest, err.Error())
+		return nil, 0, 0, utils.NewCustomError(http.StatusBadRequest, err.Error())
 	}
 	if len(orders) == 0 {
-		return nil, utils.NewCustomError(http.StatusBadRequest, "no orders found")
+		return nil, 0, 0, utils.NewCustomError(http.StatusBadRequest, "no orders found")
 	}
-	return orders, nil
+	response := make([]model.GetAllOrdersResponse, len(orders))
+	for i, order := range orders {
+		response[i] = model.GetAllOrdersResponse{
+			ID:          order.ID,
+			UserID:      order.UserID,
+			TotalPrice:  order.TotalPrice,
+			OrderStatus: order.OrderStatus,
+			CreatedAt:   order.CreatedAt,
+		}
+	}
+	return response, total, totalPages, nil
 }
 
 func (s *orderService) GetOrderDetailById(orderId string) (*model.OrderResponse, error) {
@@ -66,6 +77,7 @@ func (s *orderService) GetOrderDetailById(orderId string) (*model.OrderResponse,
 	response := &model.OrderResponse{
 		ID:          order.ID,
 		UserID:      order.UserID,
+		OrderStatus: order.OrderStatus,
 		TotalPrice:  order.TotalPrice,
 		OrderDetail: orderDetailResponse,
 	}
@@ -139,6 +151,25 @@ func (s *orderService) CreateOrderWithDetail(reqOrder *model.CreateOrderRequest)
 			}
 			break
 		}
+	}
+
+	updates := make(map[uint]int)
+	for _, od := range newOrderDetail {
+		product, exists := productMap[od.ProductID]
+		if !exists {
+			return nil, utils.NewCustomError(http.StatusNotFound, "Product not found")
+		}
+
+		updatedQuantity := product.Stock - od.Quantity
+		if updatedQuantity < 0 {
+			return nil, utils.NewCustomError(http.StatusBadRequest, fmt.Sprintf("Product %d has insufficient stock", product.ID))
+		}
+
+		updates[od.ProductID] = updatedQuantity
+	}
+
+	if err := s.productRepo.UpdateProductsQuantities(updates); err != nil {
+		return nil, utils.NewCustomError(http.StatusInternalServerError, "Failed to update product quantities")
 	}
 
 	var createTransaction = &entity.Transaction{

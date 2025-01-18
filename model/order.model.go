@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type CreateOrderRequest struct {
 	UserID       uint                 `json:"user_id"`
 	OrderStatus  string               `json:"order_status,omitempty" validate:"oneof=pending processed completed canceled"`
@@ -27,4 +29,12 @@ type OrderDetailResponse struct {
 	ProductID   uint   `json:"product_id"`
 	Quantity    int    `json:"quantity"`
 	Price       int    `json:"price"`
+}
+
+type GetAllOrdersResponse struct {
+	ID          uint      `json:"id"`
+	UserID      uint      `json:"user_id"`
+	TotalPrice  int       `json:"total_price"`
+	OrderStatus string    `json:"order_status"`
+	CreatedAt   time.Time `json:"created_at"`
 }

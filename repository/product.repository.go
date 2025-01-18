@@ -8,13 +8,14 @@ import (
 )
 
 type ProductRepository interface {
-	GetAllProducts() ([]entity.Product, error)
+	GetAllProducts(page int, pageSize int) ([]entity.Product, int64, int, error)
 	GetProductById(productId uint) (*entity.Product, error)
 	CreateNewProduct(product *entity.Product) (*entity.Product, error)
 	UpdateProduct(productId uint, reqProduct *entity.Product) error
 	DeleteProductById(productId uint) error
 
 	GetProductsByIDs(productIDs []uint) ([]entity.Product, error)
+	UpdateProductsQuantities(updates map[uint]int) error
 }
 
 type productRepository struct {
@@ -25,12 +26,39 @@ func NewProductRepository(db *gorm.DB) ProductRepository {
 	return &productRepository{db: db}
 }
 
-func (r *productRepository) GetAllProducts() ([]entity.Product, error) {
+func (r *productRepository) GetAllProducts(page int, pageSize int) ([]entity.Product, int64, int, error) {
 	var products []entity.Product
-	if err := r.db.Table("products").Find(&products).Error; err != nil {
-		return nil, err
+	var total int64
+
+	if err := r.db.Table("products").Count(&total).Error; err != nil {
+		return nil, 0, 0, err
 	}
-	return products, nil
+
+	offset := (page - 1) * pageSize
+
+	if err := r.db.Table("products").
+		Limit(pageSize).
+		Offset(offset).
+		Find(&products).Error; err != nil {
+		return nil, 0, 0, err
+	}
+
+	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
+
+	return products, total, totalPages, nil
+}
+
+func (r *productRepository) UpdateProductsQuantities(updates map[uint]int) error {
+	tx := r.db.Begin()
+
+	for productID, newQuantity := range updates {
+		if err := tx.Table("products").Where("id = ?", productID).Update("stock", newQuantity).Error; err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to update product %d: %w", productID, err)
+		}
+	}
+
+	return tx.Commit().Error
 }
 
 func (r *productRepository) GetProductById(productId uint) (*entity.Product, error) {

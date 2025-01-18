@@ -8,6 +8,7 @@ import (
 	"inventory-management/utils"
 	"inventory-management/validation"
 	"net/http"
+	"strconv"
 )
 
 type OrderController struct {
@@ -19,12 +20,25 @@ func NewOrderController(orderService service.OrderService) *OrderController {
 }
 
 func (c *OrderController) GetAllOrders(ctx *gin.Context) {
-	orders, err := c.orderService.GetAllOrders()
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+
+	orders, total, totalPages, err := c.orderService.GetAllOrders(page, pageSize)
 	if err != nil {
 		err = ctx.Error(err)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.NewResponseSuccess("Success get all orders", orders))
+
+	response := utils.NewPaginatedResponse(
+		"Success get all orders",
+		orders,
+		total,
+		totalPages,
+		page,
+		pageSize,
+	)
+
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (c *OrderController) GetOrderDetailByID(ctx *gin.Context) {

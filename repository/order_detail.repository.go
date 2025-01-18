@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 	"inventory-management/model"
@@ -53,7 +52,6 @@ func (r *orderDetailRepository) GetOrderWithDetailsByID(orderID uint) (*entity.O
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println(orderDetails)
 
 	if err := r.db.First(&order, "id = ?", orderID).Error; err != nil {
 		return nil, nil, err

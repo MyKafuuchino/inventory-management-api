@@ -18,6 +18,22 @@ func NewTransactionController(tranService service.TransactionService) *Transacti
 	return &TransactionController{transService: tranService}
 }
 
+func (c *TransactionController) GetTransactionByID(ctx *gin.Context) {
+	transactionID := ctx.Param("id")
+	iTransactionID, err := utils.ParseStringToUint(transactionID)
+	if err != nil {
+		err = ctx.Error(utils.NewCustomError(http.StatusBadRequest, "Malformed request parameters"))
+		return
+	}
+	transaction, err := c.transService.GetTransactionByID(iTransactionID)
+	if err != nil {
+		err = ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.NewResponseSuccess("Success get transaction by id", transaction))
+}
+
 func (c *TransactionController) UpdateTransactionStatus(ctx *gin.Context) {
 	var requestTransaction = &model.UpdateTransactionRequest{}
 	orderID := ctx.Param("id")

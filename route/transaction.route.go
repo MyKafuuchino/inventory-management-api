@@ -18,6 +18,7 @@ func TransactionRoute(ctx *gin.RouterGroup) {
 
 	transaction := ctx.Group("/transactions")
 	{
-		transaction.PUT("/:id", transController.UpdateTransactionStatus)
+		transaction.GET("/:id", transController.GetTransactionByID)
+		transaction.PUT("/order/:id", transController.UpdateTransactionStatus)
 	}
 }

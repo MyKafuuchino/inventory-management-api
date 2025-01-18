@@ -11,6 +11,7 @@ import (
 )
 
 type TransactionService interface {
+	GetTransactionByID(transactionID uint) (*entity.Transaction, error)
 	UpdateTransaction(transID int, reqTrans *model.UpdateTransactionRequest) (*entity.Order, error)
 }
 
@@ -20,10 +21,22 @@ type transactionService struct {
 }
 
 func NewTransactionService(transRepo repository.TransactionRepository, orderRepo repository.OrderRepository) TransactionService {
-	return transactionService{transRepo: transRepo, orderRepo: orderRepo}
+	return &transactionService{transRepo: transRepo, orderRepo: orderRepo}
 }
 
-func (s transactionService) UpdateTransaction(transID int, reqTrans *model.UpdateTransactionRequest) (*entity.Order, error) {
+func (s *transactionService) GetTransactionByID(transactionID uint) (*entity.Transaction, error) {
+	transaction, err := s.transRepo.GetTransactionById(transactionID)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, utils.NewCustomError(http.StatusNotFound, "Transaction Not Found")
+		}
+		return nil, utils.NewCustomError(http.StatusInternalServerError, "Failed to get transaction by ID")
+	}
+	return transaction, nil
+}
+
+func (s *transactionService) UpdateTransaction(transID int, reqTrans *model.UpdateTransactionRequest) (*entity.Order, error) {
 	order, err := s.orderRepo.GetOrderByID(uint(transID))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

@@ -1,13 +1,14 @@
 package repository
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"inventory-management/entity"
 	"time"
 )
 
 type OrderRepository interface {
-	GetAllOrders() ([]entity.Order, error)
+	GetAllOrders(page int, pageSize int) ([]entity.Order, int64, int, error)
 	GetOrderByID(orderID uint) (*entity.Order, error)
 	CreateOrderWithDetail(reqOrder *entity.Order, orderDetails []entity.OrderDetail) error
 	UpdateOrderStatus(reqOrder *entity.Order) error
@@ -21,19 +22,39 @@ func NewOrderRepository(db *gorm.DB) OrderRepository {
 	return &orderRepository{db: db}
 }
 
-func (r orderRepository) GetAllOrders() ([]entity.Order, error) {
+func (r orderRepository) GetAllOrders(page int, pageSize int) ([]entity.Order, int64, int, error) {
 	var orders []entity.Order
-	if err := r.db.Find(&orders).Error; err != nil {
-		return nil, err
+	var total int64
+
+	if err := r.db.Model(&entity.Order{}).Count(&total).Error; err != nil {
+		return nil, 0, 0, err
 	}
-	return orders, nil
+
+	offset := (page - 1) * pageSize
+
+	if err := r.db.Model(&entity.Order{}).
+		Limit(pageSize).
+		Offset(offset).
+		Find(&orders).Error; err != nil {
+		return nil, 0, 0, err
+	}
+
+	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
+
+	return orders, total, totalPages, nil
 }
 
 func (r orderRepository) GetOrderByID(orderID uint) (*entity.Order, error) {
 	var order entity.Order
-	if err := r.db.First(&order, "id = ?", orderID).Error; err != nil {
+
+	if err := r.db.Preload("Transaction").
+		Where("id = ?", orderID).
+		First(&order).Error; err != nil {
 		return nil, err
 	}
+
+	fmt.Println(order)
+
 	return &order, nil
 }
 

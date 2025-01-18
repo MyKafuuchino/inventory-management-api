@@ -5,7 +5,7 @@ type CreateProductRequest struct {
 	Description string `json:"description" validate:"required"`
 	Price       int    `json:"price" validate:"required"`
 	Stock       int    `json:"stock" validate:"gte=0"`
-	LowStock    int    `json:"lowStock" validate:"gte=0"`
+	LowStock    int    `json:"low_stock" validate:"gte=0"`
 }
 
 type UpdateProductRequest struct {

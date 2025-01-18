@@ -9,4 +9,5 @@ func InitRoute(ctx *gin.Engine) {
 	ProductRoute(api)
 	OrderRoute(api)
 	TransactionRoute(api)
+	ReportRoute(api)
 }

@@ -11,7 +11,7 @@ import (
 )
 
 type ProductService interface {
-	GetAllProducts() ([]entity.Product, error)
+	GetAllProducts(page, pageSize int) ([]entity.Product, int64, int, error)
 	GetProductById(productId string) (*entity.Product, error)
 	CreateNewProduct(body *model.CreateProductRequest) (*entity.Product, error)
 	UpdateProduct(productId string, body *model.UpdateProductRequest) (*entity.Product, error)
@@ -26,15 +26,23 @@ func NewProductService(productRepository repository.ProductRepository) ProductSe
 	return &productService{productRepository: productRepository}
 }
 
-func (s *productService) GetAllProducts() ([]entity.Product, error) {
-	products, err := s.productRepository.GetAllProducts()
+func (s *productService) GetAllProducts(page, pageSize int) ([]entity.Product, int64, int, error) {
+	products, total, totalPages, err := s.productRepository.GetAllProducts(page, pageSize)
 	if err != nil {
-		err = utils.NewCustomError(http.StatusInternalServerError, "Error while fetching products "+err.Error())
+		return nil, 0, 0, utils.NewCustomError(
+			http.StatusInternalServerError,
+			"Error while fetching products: "+err.Error(),
+		)
 	}
+
 	if len(products) == 0 {
-		err = utils.NewCustomError(http.StatusNotFound, "Products not found, please create new product")
+		return nil, 0, 0, utils.NewCustomError(
+			http.StatusNotFound,
+			"Products not found, please create new product",
+		)
 	}
-	return products, err
+
+	return products, total, totalPages, nil
 }
 
 func (s *productService) GetProductById(productId string) (*entity.Product, error) {
