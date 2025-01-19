@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"inventory-management/controller"
 	"inventory-management/database"
+	"inventory-management/middleware"
 	"inventory-management/repository"
 	"inventory-management/service"
 )
@@ -18,7 +19,7 @@ func TransactionRoute(ctx *gin.RouterGroup) {
 
 	transaction := ctx.Group("/transactions")
 	{
-		transaction.GET("/:id", transController.GetTransactionByID)
-		transaction.PUT("/order/:id", transController.UpdateTransactionStatus)
+		transaction.GET("/:id", middleware.ProtectRoute("admin", "chaser"), transController.GetTransactionByID)
+		transaction.PUT("/order/:id", middleware.ProtectRoute("admin", "chaser"), transController.UpdateTransactionStatus)
 	}
 }

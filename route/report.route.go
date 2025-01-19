@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"inventory-management/controller"
 	"inventory-management/database"
+	"inventory-management/middleware"
 	"inventory-management/repository"
 	"inventory-management/service"
 )
@@ -15,7 +16,7 @@ func ReportRoute(ctx *gin.RouterGroup) {
 
 	report := ctx.Group("/reports")
 	{
-		report.GET("/top-products", reportController.GetTopProducts)
-		report.GET("/low-stock-products", reportController.GetLowStockProducts)
+		report.GET("/top-products", middleware.ProtectRoute("chaser", "admin"), reportController.GetTopProducts)
+		report.GET("/low-stock-products", middleware.ProtectRoute("chaser", "admin"), reportController.GetLowStockProducts)
 	}
 }

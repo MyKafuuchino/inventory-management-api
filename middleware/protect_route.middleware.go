@@ -7,9 +7,9 @@ import (
 	"inventory-management/config"
 	"inventory-management/database"
 	"inventory-management/entity"
-	"inventory-management/utils"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func ProtectRoute(roles ...string) gin.HandlerFunc {
@@ -17,14 +17,14 @@ func ProtectRoute(roles ...string) gin.HandlerFunc {
 		secretKey := config.GlobalAppConfig.SecretKey
 		token := ctx.GetHeader("Authorization")
 		if token == "" {
-			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Authorization header is empty"))
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is empty"})
 			ctx.Abort()
 			return
 		}
 
 		tokenPart := strings.Split(token, " ")
 		if len(tokenPart) != 2 || tokenPart[0] != "Bearer" {
-			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid token format"))
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
 			ctx.Abort()
 			return
 		}
@@ -37,45 +37,56 @@ func ProtectRoute(roles ...string) gin.HandlerFunc {
 		})
 
 		if err != nil || !parsedToken.Valid {
-			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid token"))
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			ctx.Abort()
 			return
 		}
 
 		claims, ok := parsedToken.Claims.(jwt.MapClaims)
 		if !ok || !parsedToken.Valid {
-			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid token claims"))
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			ctx.Abort()
 			return
 		}
 
-		fmt.Println("Claims ", claims)
+		if exp, ok := claims["exp"].(float64); ok {
+			if time.Now().Unix() > int64(exp) {
+				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Token expired"})
+				ctx.Abort()
+				return
+			}
+		}
 
 		userID, ok := claims["userId"].(float64)
 		if !ok {
-			err = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "UserId not found in token"))
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "UserId not found in token"})
 			ctx.Abort()
 			return
 		}
 
 		user := &entity.User{}
 		result := database.DB.Table("users").Select("id", "username", "role").Where("id = ?", userID).First(user)
-
 		if result.Error != nil {
-			_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "User not found"))
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			ctx.Abort()
 			return
 		}
 
+		isAuthorized := false
 		for _, role := range roles {
 			if role == user.Role {
-				ctx.Set("user", user)
-				ctx.Next()
-			} else {
-				_ = ctx.Error(utils.NewCustomError(http.StatusUnauthorized, "Invalid role"))
-				ctx.Abort()
-				return
+				isAuthorized = true
+				break
 			}
 		}
+
+		if !isAuthorized {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Insufficient role permissions"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Set("user", user)
+		ctx.Next()
 	}
 }
